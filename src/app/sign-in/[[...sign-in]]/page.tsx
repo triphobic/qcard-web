@@ -1,0 +1,338 @@
+'use client';
+
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { signIn } from '@/lib/client-auth';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+export default function SignInPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [pageReady, setPageReady] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const showDebugMode = searchParams?.get('debug') === 'true';
+  const hasAuthTimeout = searchParams?.get('auth_timeout') === 'true';
+  const isNewlyRegistered = searchParams?.get('registered') === 'true';
+  const callbackUrl = searchParams?.get('callbackUrl') || '/role-redirect';
+  
+  // Set the page as ready immediately - CSRF handling is now done in client-auth
+  useEffect(() => {
+    console.log('Setting up sign-in page...');
+    // BUILD VERIFICATION - THESE MUST APPEAR IN CONSOLE
+    console.log('🔴 BUILD DATE: 2024-11-16-21:00 PST');
+    console.log('🔴 This version DELETED supabase-client-auth.ts');
+    console.log('🔴 If you see [Supabase Client] logs, you have OLD BUILD');
+    console.log('🔴 You should see [Supabase Browser] logs instead');
+    setPageReady(true);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      console.log("Attempting sign-in with credentials...");
+      
+      // Use the proper signIn function from client-auth
+      const result = await signIn({
+        email,
+        password,
+        redirect: false,
+        callbackUrl
+      });
+      
+      if (result.error) {
+        console.error('Sign-in failed:', result.error);
+        setError(result.error === 'CredentialsSignin' 
+          ? 'Invalid email or password' 
+          : 'An error occurred during sign in. Please try again.');
+        setIsLoading(false);
+      } else if (result.ok) {
+        console.log('Sign-in successful, redirecting...');
+        // Successful sign-in - redirect to callback URL
+        router.push(callbackUrl);
+      } else {
+        console.error('Sign-in failed with unknown error');
+        setError('An error occurred during sign in. Please try again.');
+        setIsLoading(false);
+      }
+      
+    } catch (error) {
+      console.error("Sign-in error:", error);
+      setError('An error occurred during sign in. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  // State for debug section moved to top level to avoid hooks violations
+  const [dbStatus, setDbStatus] = useState<any>(null);
+  const [isCheckingDb, setIsCheckingDb] = useState(false);
+
+  // Enhanced debug section for troubleshooting
+  const DebugSection = () => {
+    if (!showDebugMode) return null;
+    
+    // Function to check database status
+    const checkDbStatus = async () => {
+      setIsCheckingDb(true);
+      try {
+        const response = await fetch('/api/auth/db-status');
+        if (response.ok) {
+          const data = await response.json();
+          setDbStatus(data);
+        } else {
+          setDbStatus({ error: `API error: ${response.status}` });
+        }
+      } catch (error) {
+        setDbStatus({ error: String(error) });
+      } finally {
+        setIsCheckingDb(false);
+      }
+    };
+    
+    return (
+      <div className="mt-6 p-4 bg-gray-100 rounded-md text-xs font-mono">
+        <h3 className="font-bold mb-2">Auth Debug Info</h3>
+        <p>URL: {window.location.href}</p>
+        <p>Search params: {searchParams?.toString()}</p>
+        <p>Callback URL: {callbackUrl}</p>
+        <div className="mt-2">
+          <button 
+            className="bg-gray-200 px-2 py-1 rounded"
+            onClick={() => localStorage.clear()}
+          >
+            Clear LocalStorage
+          </button>
+          <Link 
+            href="/auth-debug"
+            className="ml-2 bg-blue-500 text-white px-2 py-1 rounded inline-block"
+          >
+            Auth Debug Page
+          </Link>
+        </div>
+        
+        {/* Database status check */}
+        <div className="mt-3 pt-2 border-t border-gray-300">
+          <button 
+            onClick={checkDbStatus}
+            disabled={isCheckingDb}
+            className="bg-green-500 text-white px-2 py-1 rounded text-xs"
+          >
+            {isCheckingDb ? 'Checking...' : 'Check Database'}
+          </button>
+          
+          {dbStatus && (
+            <div className="mt-2 p-2 bg-gray-200 rounded text-xs">
+              {dbStatus.error ? (
+                <p className="text-red-600">Error: {dbStatus.error}</p>
+              ) : (
+                <>
+                  <p>Status: <span className={dbStatus.status === 'connected' ? 'text-green-600' : 'text-red-600'}>
+                    {dbStatus.status}
+                  </span></p>
+                  <p>Users: {dbStatus.userCount || 0}</p>
+                  {dbStatus.database?.status && <p>DB: {dbStatus.database.status}</p>}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+  
+  // Show loading state while page is initializing
+  if (!pageReady) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
+        <div className="text-center">
+          <div className="inline-block w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p>Loading sign-in page...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Render the normal sign-in page once ready
+  return (
+    <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+      
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in to your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Or{' '}
+            <Link
+              href="/sign-up"
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              create a new account
+            </Link>
+          </p>
+        </div>
+        
+        {isNewlyRegistered && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded flex items-start">
+            <div className="flex-shrink-0 mt-0.5">
+              <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">Account created successfully!</p>
+              <p className="mt-1 text-xs">
+                Please sign in with your new credentials to continue.
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded flex items-start">
+            <div className="flex-shrink-0 mt-0.5">
+              <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">{error}</p>
+              {error.includes('User not found') && (
+                <p className="mt-1 text-xs">
+                  Don&apos;t have an account?{' '}
+                  <Link href="/sign-up" className="font-medium text-red-700 hover:text-red-600">
+                    Sign up now
+                  </Link>
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Auth timeout notification */}
+        {hasAuthTimeout && (
+          <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-3 rounded mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm">
+                  <strong>Database connection issue detected.</strong> You&apos;ve been redirected to the sign-in page due to database connectivity issues. You can:
+                </p>
+                <ul className="list-disc ml-5 mt-1 text-xs">
+                  <li>Try signing in (the database may be available now)</li>
+                  <li>Try again later if the issue persists</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Additional info about database connectivity */}
+        {hasAuthTimeout && !error && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded flex items-start">
+            <div className="flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm">
+                <span className="font-medium">Database Status Check:</span> Our system detected a recent database issue that has been resolved. If you encounter any sign-in problems, please try again or contact support.
+              </p>
+            </div>
+          </div>
+        )}
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <input type="hidden" name="remember" defaultValue="true" />
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="email-address" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="email-address"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                Remember me
+              </label>
+            </div>
+
+            <div className="text-sm">
+              <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                Forgot your password?
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400"
+            >
+              {isLoading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </div>
+        </form>
+        
+        {/* Debug section for troubleshooting */}
+        <DebugSection />
+        
+      </div>
+    </div>
+  );
+}

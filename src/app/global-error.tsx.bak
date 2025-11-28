@@ -1,0 +1,21 @@
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}) {
+  return (
+    // Global error must include html and body tags
+    <html lang="en">
+      <body>
+        <div>
+          <h2>Something went wrong!</h2>
+          <form action={reset}>
+            <button type="submit">Try again</button>
+          </form>
+        </div>
+      </body>
+    </html>
+  );
+}

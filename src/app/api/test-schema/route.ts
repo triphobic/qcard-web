@@ -1,0 +1,72 @@
+import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/supabase-auth';
+import { db, handleDbOptional, handleDbResult } from '@/lib/supabase-db';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  try {
+    const supabase = db();
+
+    const session = await getSession();
+
+    if (!session?.profile?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get user profile
+    const userResult = await supabase
+      .from('User')
+      .select('*')
+      .eq('id', session.profile.id)
+      .single();
+
+    const user = handleDbOptional(userResult);
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Get profile
+    const profileResult = await supabase
+      .from('Profile')
+      .select('*')
+      .eq('userId', user.id)
+      .single();
+
+    const profile = handleDbOptional(profileResult);
+
+    if (!profile) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    }
+    
+    // List all fields directly from the profile to verify what's in the DB
+    const profileFields = Object.keys(profile);
+    const fieldsWithTypes: Record<string, string> = {};
+    
+    // Create a map of fields and their types
+    profileFields.forEach(field => {
+      fieldsWithTypes[field] = typeof (profile as any)[field];
+    });
+    
+    return NextResponse.json({
+      message: "Profile schema test",
+      profile_id: profile.id,
+      available_fields: profileFields,
+      field_types: fieldsWithTypes,
+      // Show a sample of the field values where not null
+      sample_values: Object.fromEntries(
+        Object.entries(profile)
+          .filter(([_, value]) => value !== null)
+          .map(([key, value]) => [key, String(value).substring(0, 50)])
+      )
+    });
+  } catch (error) {
+    console.error("Error testing profile schema:", error);
+    return NextResponse.json({ 
+      error: "Failed to test profile schema",
+      details: error instanceof Error ? error.message : String(error),
+      stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined,
+    }, { status: 500 });
+  }
+}

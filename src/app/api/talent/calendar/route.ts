@@ -1,0 +1,232 @@
+import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/supabase-auth';
+import { db, handleDbOptional, handleDbResult } from '@/lib/supabase-db';
+
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
+// GET /api/talent/calendar - Get calendar events for the talent
+export async function GET(request: Request) {
+  try {
+    const supabase = db();
+    const session = await getSession();
+
+    if (!session?.profile?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Find the user and their profile
+    const userResult = await supabase
+      .from('User')
+      .select(`
+        id,
+        Profile (
+          id
+        )
+      `)
+      .eq('id', session.profile.id)
+      .single();
+
+    const user = handleDbOptional(userResult);
+
+    if (!user) {
+      console.log("User not found in calendar API:", session.profile.id);
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // If profile doesn't exist, return an empty calendar instead of an error
+    if (!user.Profile) {
+      console.log("No profile found for user in calendar API:", session.profile.id);
+      return NextResponse.json([]);
+    }
+
+    const profileId = (user.Profile as any).id;
+
+    // Get all projects the talent is a member of
+    const projectMembershipsResult = await supabase
+      .from('ProjectMember')
+      .select(`
+        id,
+        role,
+        Project (
+          id,
+          title,
+          status,
+          startDate,
+          endDate,
+          Studio (
+            name
+          ),
+          Scene (
+            id,
+            title,
+            shootDate,
+            duration,
+            status,
+            Location (
+              name
+            ),
+            SceneTalent (
+              id,
+              role,
+              notes,
+              profileId
+            )
+          )
+        )
+      `)
+      .eq('profileId', profileId);
+
+    const projectMemberships = handleDbResult(projectMembershipsResult);
+
+    // Structure the calendar events
+    const calendarEvents = [];
+
+    // Add project events (overall project timeline)
+    for (const membership of projectMemberships as any[]) {
+      const project = membership.Project;
+
+      if (project.startDate || project.endDate) {
+        calendarEvents.push({
+          id: `project-${project.id}`,
+          title: project.title,
+          type: 'project',
+          start: project.startDate,
+          end: project.endDate,
+          studio: project.Studio.name,
+          role: membership.role || 'Talent',
+          status: project.status,
+          allDay: true, // Projects are typically all-day events
+        });
+      }
+
+      // Add scene events (specific shooting dates)
+      for (const scene of project.Scene || []) {
+        // Only include scenes where the talent is assigned
+        const sceneTalentForProfile = scene.SceneTalent?.filter((st: any) => st.profileId === profileId) || [];
+
+        if (sceneTalentForProfile.length > 0 && scene.shootDate) {
+          const sceneTalent = sceneTalentForProfile[0]; // There should only be one entry for this talent
+
+          calendarEvents.push({
+            id: `scene-${scene.id}`,
+            title: scene.title,
+            type: 'scene',
+            start: scene.shootDate,
+            // If duration is specified in minutes, calculate end time
+            end: scene.duration
+              ? new Date(new Date(scene.shootDate).getTime() + scene.duration * 60 * 1000)
+              : scene.shootDate, // Default to the same day if no duration
+            projectId: project.id,
+            projectTitle: project.title,
+            studio: project.Studio.name,
+            role: sceneTalent.role || membership.role || 'Talent',
+            notes: sceneTalent.notes,
+            location: scene.Location ? {
+              name: scene.Location.name,
+            } : null,
+            status: scene.status,
+            allDay: scene.duration ? false : true, // All-day if no duration specified
+          });
+        }
+      }
+    }
+
+    return NextResponse.json(calendarEvents);
+  } catch (error) {
+    console.error("Error fetching calendar events:", error);
+    return NextResponse.json({
+      error: "Failed to fetch calendar events",
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
+  }
+}
+
+// POST /api/talent/calendar/export - Generate an ICS file for calendar export
+export async function POST(request: Request) {
+  try {
+    const session = await getSession();
+
+    if (!session?.profile?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Parse the body to get the events to export
+    const { events } = await request.json();
+
+    if (!events || !Array.isArray(events)) {
+      return NextResponse.json({ error: "Invalid events data" }, { status: 400 });
+    }
+
+    // Generate ICS file content
+    let icsContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//QCard//Calendar//EN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH"
+    ];
+
+    // Add each event to the ICS file
+    for (const event of events) {
+      // Format dates to ICS format (YYYYMMDDTHHmmssZ)
+      const formatDate = (date: string | Date) => {
+        const d = new Date(date);
+        return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      };
+
+      const startDate = formatDate(event.start);
+      const endDate = event.end ? formatDate(event.end) : startDate;
+
+      // Create a unique ID for the event
+      const uid = `${event.id}@qcard.app`;
+
+      // Create summary (title)
+      const summary = `${event.title} ${event.type === 'scene' ? `(${event.projectTitle})` : ''}`;
+
+      // Create description with all relevant details
+      let description = `Role: ${event.role}\\n`;
+      if (event.studio) description += `Studio: ${event.studio}\\n`;
+      if (event.notes) description += `Notes: ${event.notes}\\n`;
+      if (event.type === 'scene' && event.projectId) {
+        description += `Project: ${event.projectTitle}\\n`;
+      }
+
+      // Create location if available
+      const location = event.location ? event.location.name : '';
+
+      // Add event to ICS content
+      icsContent = icsContent.concat([
+        "BEGIN:VEVENT",
+        `UID:${uid}`,
+        `DTSTAMP:${formatDate(new Date())}`,
+        `DTSTART:${startDate}`,
+        `DTEND:${endDate}`,
+        `SUMMARY:${summary}`,
+        `DESCRIPTION:${description}`,
+        location ? `LOCATION:${location}` : '',
+        "END:VEVENT"
+      ]);
+    }
+
+    // Close the calendar
+    icsContent.push("END:VCALENDAR");
+
+    // Filter out empty lines
+    const icsFile = icsContent.filter(line => line).join("\r\n");
+
+    // Return the ICS file
+    return new NextResponse(icsFile, {
+      headers: {
+        'Content-Type': 'text/calendar',
+        'Content-Disposition': 'attachment; filename="qcard-calendar.ics"'
+      }
+    });
+  } catch (error) {
+    console.error("Error generating calendar export:", error);
+    return NextResponse.json({
+      error: "Failed to generate calendar export",
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
+  }
+}
