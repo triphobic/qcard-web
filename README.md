@@ -74,13 +74,44 @@ npm run test
 
 ## Deployment
 
-Deploy to Vercel, Netlify, or Docker:
+### Production Ready ✅
 
+The frontend is fully configured for production deployment. See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for detailed instructions.
+
+**Quick Start for Production:**
+
+#### Docker
 ```bash
-# Docker build
-docker build -t qcard-web .
-docker run -p 3002:3002 qcard-web
+docker build -t qcard-web:latest .
+docker run -p 3002:3002 \
+  -e NEXT_PUBLIC_SUPABASE_URL=your_url \
+  -e NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key \
+  -e NEXT_PUBLIC_API_URL=https://api.yourdomain.com \
+  qcard-web:latest
 ```
+
+#### Dokploy
+```bash
+# Upload code to Dokploy
+# Set environment variables in Dokploy UI
+# Deploy automatically handles Docker build and SSL
+```
+
+#### Vercel
+```bash
+# Push to GitHub
+# Connect to Vercel
+# Set environment variables in Vercel dashboard
+```
+
+**Includes:**
+- ✅ Multi-stage optimized Docker build
+- ✅ Health check endpoint
+- ✅ Production-grade Dockerfile
+- ✅ Security headers configured
+- ✅ Static asset optimization
+- ✅ Source maps for debugging
+- ✅ Non-root user for security
 
 ## License
 
