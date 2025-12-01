@@ -5,7 +5,7 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 
 # Install dependencies needed for native modules
-RUN apk add --no-cache libc6-compat openssl
+RUN apk add --no-cache libc6-compat openssl python3 make g++
 
 # Copy package files
 COPY package*.json ./
@@ -13,9 +13,9 @@ COPY package*.json ./
 # Install dependencies
 # Use npm install if package-lock.json doesn't exist, otherwise use npm ci
 RUN if [ -f package-lock.json ]; then \
-      npm ci --only=production --ignore-scripts; \
+      npm ci --only=production; \
     else \
-      npm install --only=production --ignore-scripts; \
+      npm install --only=production; \
     fi && \
     npm cache clean --force
 
@@ -25,16 +25,16 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install dependencies needed for native modules
-RUN apk add --no-cache libc6-compat openssl
+RUN apk add --no-cache libc6-compat openssl python3 make g++
 
 # Copy package files
 COPY package*.json ./
 
 # Install ALL dependencies (including devDependencies) needed for build
 RUN if [ -f package-lock.json ]; then \
-      npm ci --ignore-scripts; \
+      npm ci; \
     else \
-      npm install --ignore-scripts; \
+      npm install; \
     fi
 
 # Copy application source
