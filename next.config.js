@@ -33,16 +33,6 @@ const nextConfig = {
   // Use standalone output for Docker deployment
   output: 'standalone',
 
-  // Moved from experimental in Next.js 16
-  outputFileTracingExcludes: {
-    '*': [
-      'node_modules/@swc/**',
-      'node_modules/@mapbox/**',
-      'node_modules/aws-sdk/**',
-      'node_modules/nock/**',
-      'node_modules/mock-aws-s3/**'
-    ],
-  },
 
   // Configure environment variables for build time only
   env: {
@@ -61,9 +51,6 @@ const nextConfig = {
   poweredByHeader: false,
   skipTrailingSlashRedirect: true,
   productionBrowserSourceMaps: false,
-
-  // Server packages that should not be bundled
-  serverExternalPackages: ['bcrypt'],
 
   // Simplified webpack configuration (for when using --webpack flag)
   webpack: (config, { isServer }) => {
