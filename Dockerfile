@@ -69,17 +69,18 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # Switch to non-root user
 USER nextjs
 
-# Expose port
+# Expose port (default 3002, can be overridden)
 EXPOSE 3002
 
-# Set runtime environment
+# Set runtime environment - PORT can be overridden at runtime
 ENV NODE_ENV=production
 ENV PORT=3002
+ENV HOSTNAME=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3002/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })" || exit 1
+# Health check - uses $PORT environment variable
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD node -e "const port = process.env.PORT || 3002; require('http').get('http://localhost:' + port + '/api/liveness', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })" || exit 1
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
