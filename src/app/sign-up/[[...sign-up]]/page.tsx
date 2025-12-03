@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from '@/lib/client-auth';
+import { getSupabaseBrowser } from '@/lib/supabase-browser';
 
 export default function SignUpPage() {
   const searchParams = useSearchParams();
@@ -98,91 +99,73 @@ export default function SignUpPage() {
     try {
       setIsLoading(true);
       setError('');
-      
+
       console.log("Registering new user...");
-      
+
+      // Step 1: Create user in Supabase Auth (client-side)
+      const supabase = await getSupabaseBrowser();
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            userType: formData.userType,
+          },
+        },
+      });
+
+      if (authError) {
+        console.error("Supabase auth error:", authError);
+        throw new Error(authError.message);
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
+
+      console.log("Supabase user created:", authData.user.id);
+
+      // Step 2: Create app profile in backend
       const requestData = {
+        userId: authData.user.id,
+        email: formData.email,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword, // Make sure to send this field
+        phoneNumber: formData.phoneNumber || undefined,
         userType: formData.userType,
         submissionId: formData.submissionId || undefined,
       };
-      
-      console.log("Registration request data:", JSON.stringify(requestData, null, 2));
-      
-      // Register user with a simplified approach
+
+      console.log("Creating app profile:", JSON.stringify(requestData, null, 2));
+
       try {
-        const response = await fetch('/api/register', {
+        const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authData.session?.access_token}`,
           },
           body: JSON.stringify(requestData),
         });
-        
-        console.log("Registration response status:", response.status);
-        
-        const responseData = await response.json();
-        console.log("Registration response data:", responseData);
-        
+
+        console.log("Profile creation response status:", response.status);
+
         if (!response.ok) {
-          throw new Error(responseData.error || 'Registration failed');
+          const responseData = await response.json();
+          console.error("Profile creation failed:", responseData);
+          // Don't throw - the Supabase user exists, we can continue
+        } else {
+          console.log("App profile created successfully");
         }
-        
-        console.log("Registration API call successful:", responseData);
       } catch (fetchError) {
-        console.error("Fetch error during registration:", fetchError);
-        throw fetchError;
+        console.error("Error creating app profile:", fetchError);
+        // Don't throw - the Supabase user exists, profile can be created later
       }
 
-      // If registration successful and autoSignIn is true, sign the user in
-      if (responseData.autoSignIn) {
-        console.log("Auto-signing in user after registration...");
-
-        try {
-          // Sign in with the credentials they just registered with
-          await signIn(formData.email, formData.password);
-          console.log("Auto sign-in successful!");
-
-          // Redirect to role-based page
-          window.location.href = '/role-redirect';
-          return;
-        } catch (signInError) {
-          console.error("Auto sign-in failed:", signInError);
-          // Fall back to manual sign-in
-          router.push('/sign-in?registered=true&message=Please sign in with your new account');
-          return;
-        }
-      }
-
-      // Fallback: redirect to sign-in page
-      console.log("Registration successful! Redirecting to sign-in page...");
-      router.push('/sign-in?registered=true');
-      return;
-      
-      // Check if there's an external actor record for this email and convert if found
-      if (formData.userType === 'TALENT') {
-        try {
-          console.log("Checking for external actor records...");
-          const externalActorResponse = await fetch('/api/auth/convert-external-actor');
-          const externalActorData = await externalActorResponse.json();
-          
-          if (externalActorData.converted) {
-            console.log('Converted from external actor:', externalActorData.message);
-          }
-        } catch (error) {
-          console.error('Error checking for external actor conversion:', error);
-          // Continue with sign-in even if conversion check fails
-        }
-      }
-      
-      console.log("Sign-in successful, redirecting to role-redirect page");
-      // Use window.location for a complete page reload
-      // This ensures all session data is properly initialized
+      // User is already signed in after signUp, redirect to role-redirect
+      console.log("Registration successful! Redirecting...");
       window.location.href = '/role-redirect';
     } catch (error: any) {
       console.error("Registration error:", error);

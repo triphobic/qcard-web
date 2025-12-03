@@ -11,8 +11,121 @@
   --background-end-rgb: 255, 255, 255;
 }
 
+.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 26, 26, 46;
+  --background-end-rgb: 26, 26, 46;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-start-rgb));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Dark mode text color overrides for common utility classes */
+.dark .text-gray-900 {
+  color: #f3f4f6 !important;
+}
+
+.dark .text-gray-800 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+.dark .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+/* Dark mode background overrides */
+.dark .bg-white {
+  background-color: #16213e !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #1a1a2e !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #0f3460 !important;
+}
+
+/* Dark mode border overrides */
+.dark .border-gray-300 {
+  border-color: #0f3460 !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #0f3460 !important;
+}
+
+/* Dark mode input styling */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #1a1a2e;
+  border-color: #0f3460;
+  color: #f3f4f6;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #3b82f6;
+}
+
+/* Dark mode alert/notification backgrounds */
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.dark .bg-green-50 {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+}
+
+.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+}
+
+.dark .bg-yellow-50 {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+}
+
+/* Dark mode alert borders */
+.dark .border-blue-200 {
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+.dark .border-green-200 {
+  border-color: rgba(34, 197, 94, 0.4) !important;
+}
+
+.dark .border-red-200 {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.dark .border-yellow-200,
+.dark .border-yellow-300 {
+  border-color: rgba(234, 179, 8, 0.4) !important;
+}
+
+/* Dark mode selection card styling */
+.dark .border-blue-500 {
+  border-color: #3b82f6 !important;
+}
+
+.dark .border-green-500 {
+  border-color: #22c55e !important;
 }
