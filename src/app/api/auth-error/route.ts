@@ -1,16 +1,10 @@
-import { NextResponse } from "next/server";
+/**
+ * /api/auth-error Route
+ * Proxied to Backend
+ */
 
-export const dynamic = "force-dynamic";
+import { createProxyHandlers } from '@/lib/api-proxy';
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const error = searchParams.get("error");
+export const dynamic = 'force-dynamic';
 
-  console.log("Auth error:", error);
-
-  return NextResponse.json({ 
-    error: error || "Unknown auth error",
-    message: "An authentication error occurred. This page helps with debugging.",
-    docs: "See https://errors.authjs.dev for more information."
-  });
-}
+export const { GET } = createProxyHandlers();
