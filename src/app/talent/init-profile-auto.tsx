@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from '@/hooks/useSupabaseAuth';
+import { useSession, useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import Link from 'next/link';
 
 interface AutoInitProfileProps {
@@ -15,10 +15,24 @@ interface AutoInitProfileProps {
  */
 export default function AutoInitProfile({ onComplete }: AutoInitProfileProps) {
   const { data: session, status } = useSession();
+  const { signOut } = useSupabaseAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const initStarted = useRef(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      router.push('/sign-in');
+    } catch (err) {
+      console.error('Logout failed:', err);
+      // Force redirect anyway
+      window.location.href = '/sign-in';
+    }
+  };
 
   useEffect(() => {
     // Prevent multiple initializations
@@ -114,15 +128,16 @@ export default function AutoInitProfile({ onComplete }: AutoInitProfileProps) {
               Try Again
             </button>
 
-            <Link
-              href="/sign-in"
-              className="block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
             >
-              Back to Sign In
-            </Link>
+              {isLoggingOut ? 'Logging out...' : 'Log Out'}
+            </button>
 
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-              If this problem persists, please contact support.
+              If this problem persists, try logging out and registering again.
             </p>
           </div>
         </div>
