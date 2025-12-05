@@ -84,6 +84,10 @@ export function useSupabaseAuth() {
 export function useSession() {
   const { user, loading } = useSupabaseAuth();
 
+  // Get tenantType from metadata and normalize to uppercase
+  const rawTenantType = user?.user_metadata?.tenantType || user?.user_metadata?.userType || 'TALENT';
+  const tenantType = typeof rawTenantType === 'string' ? rawTenantType.toUpperCase() : 'TALENT';
+
   return {
     data: user ? {
       user: {
@@ -91,7 +95,9 @@ export function useSession() {
         email: user.email,
         name: user.email?.split('@')[0], // Use email prefix as name if not available
         image: null,
-        tenantType: user.user_metadata?.tenantType || 'talent',
+        tenantType: tenantType,
+        role: user.user_metadata?.role || 'USER',
+        isAdmin: user.user_metadata?.role === 'ADMIN' || user.user_metadata?.role === 'SUPER_ADMIN',
       },
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
     } : null,
