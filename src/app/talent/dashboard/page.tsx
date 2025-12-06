@@ -6,7 +6,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useSession, useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useRouter } from 'next/navigation';
-import AutoInitProfile from '../init-profile-auto';
 import SuggestedRoles from '@/components/talent/SuggestedRoles';
 
 export default function TalentDashboard() {
@@ -15,8 +14,6 @@ export default function TalentDashboard() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
-  const [needsInitialization, setNeedsInitialization] = useState(false);
-  const [initFailed, setInitFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fetchAttempted = useRef(false);
 
@@ -42,28 +39,47 @@ export default function TalentDashboard() {
 
     fetchAttempted.current = true;
 
-    async function fetchProfile() {
+    async function fetchOrCreateProfile() {
       try {
-        const response = await fetch('/api/talent/profile', {
+        // Try to fetch existing profile
+        let response = await fetch('/api/talent/profile', {
           headers: { 'Cache-Control': 'no-cache' }
         });
+
+        // If profile doesn't exist, create it silently
+        if (response.status === 404) {
+          const initResponse = await fetch('/api/profile-init', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userType: 'TALENT' })
+          });
+
+          if (!initResponse.ok) {
+            console.error('Profile init failed:', await initResponse.text());
+            // Continue anyway - profile page can handle missing profile
+          }
+
+          // Retry fetching profile after init
+          response = await fetch('/api/talent/profile', {
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+        }
 
         if (response.ok) {
           const data = await response.json();
           setProfileData(data);
-        } else if (response.status === 404) {
-          setNeedsInitialization(true);
-        } else {
-          setError("Error loading profile. Please try again.");
         }
+        // If still 404 or error, just show dashboard without profile data
+        // The profile page can handle the actual profile setup
       } catch (err) {
-        setError("Network error. Please check your connection.");
+        console.error('Error loading profile:', err);
+        // Don't show error - just proceed without profile data
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchProfile();
+    fetchOrCreateProfile();
   }, [status, session, router]);
 
   const handleLogout = async () => {
@@ -82,7 +98,7 @@ export default function TalentDashboard() {
     );
   }
 
-  if (error || initFailed) {
+  if (error) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center p-8 max-w-md bg-white dark:bg-dark-card rounded-lg shadow-lg">
@@ -92,9 +108,7 @@ export default function TalentDashboard() {
             </svg>
           </div>
           <h2 className="text-2xl font-bold mb-2">Unable to Load Dashboard</h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            {error || "The backend service is unavailable. Please try again later."}
-          </p>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
           <div className="space-y-3">
             <button
               onClick={() => window.location.reload()}
@@ -111,18 +125,6 @@ export default function TalentDashboard() {
           </div>
         </div>
       </div>
-    );
-  }
-
-  // Show initialization screen - but only once
-  if (needsInitialization && !initFailed) {
-    return (
-      <AutoInitProfile
-        onComplete={() => {
-          // Profile created, reload page to fetch it
-          window.location.reload();
-        }}
-      />
     );
   }
 

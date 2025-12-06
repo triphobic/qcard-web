@@ -3,96 +3,87 @@
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useSession } from '@/hooks/useSupabaseAuth';
-import { redirect } from 'next/navigation';
-import AutoInitStudio from '../init-studio-auto';
 
 export default function StudioDashboard() {
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(true);
   const [studioData, setStudioData] = useState(null);
-  const [needsInitialization, setNeedsInitialization] = useState(false);
-  const [checkComplete, setCheckComplete] = useState(false);
-  
+  const fetchAttempted = useRef(false);
+
   useEffect(() => {
-    async function checkUserRole() {
-      // Skip if still loading or already completed check
-      if (status === 'loading' || checkComplete) return;
-      
-      if (status === 'unauthenticated') {
-        console.log("Not authenticated, redirecting to sign-in");
-        window.location.href = '/sign-in';
-        return;
-      }
-      
-      if (status === 'authenticated' && session?.user?.id) {
-        try {
-          // Check tenant type directly from the session
-          if (session?.user?.tenantType !== 'STUDIO') {
-            console.log("Not a studio user, redirecting to talent dashboard");
-            window.location.href = '/talent/dashboard';
-            return;
-          }
-          
-          console.log("Fetching studio profile data...");
-          
-          // Get studio data with cache control
-          const studioResponse = await fetch('/api/studio/profile', {
-            headers: {
-              'Cache-Control': 'no-cache',
-            },
+    // Only fetch once per mount
+    if (fetchAttempted.current || status === 'loading') return;
+
+    if (status === 'unauthenticated') {
+      window.location.href = '/sign-in';
+      return;
+    }
+
+    if (!session?.user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (session?.user?.tenantType !== 'STUDIO') {
+      window.location.href = '/talent/dashboard';
+      return;
+    }
+
+    fetchAttempted.current = true;
+
+    async function fetchOrCreateStudio() {
+      try {
+        // Try to fetch existing studio profile
+        let response = await fetch('/api/studio/profile', {
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+
+        // If studio doesn't exist, create it silently
+        if (response.status === 404) {
+          const initResponse = await fetch('/api/profile-init', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userType: 'STUDIO' })
           });
-          console.log("Studio profile response status:", studioResponse.status);
-          
-          if (studioResponse.ok) {
-            const data = await studioResponse.json();
-            console.log("Studio profile data received");
-            setStudioData(data);
-            setIsLoading(false);
-            setCheckComplete(true); // Only mark complete on success
-          } else if (studioResponse.status === 404) {
-            // Studio data doesn't exist, needs initialization
-            console.log("Studio profile not found, needs initialization");
-            setNeedsInitialization(true);
-            setIsLoading(false);
-            setCheckComplete(true); // Mark complete to prevent re-runs
-          } else {
-            // Other error - try initialization as fallback
-            console.log("Error fetching studio profile, trying initialization as fallback");
-            setNeedsInitialization(true);
-            setIsLoading(false);
-            setCheckComplete(true); // Mark complete to prevent re-runs
+
+          if (!initResponse.ok) {
+            console.error('Studio init failed:', await initResponse.text());
           }
-        } catch (error) {
-          console.error("Error loading studio dashboard:", error);
-          
-          // Check if this might be a network error or auth issue
-          if (error instanceof Error && error.message.includes('fetch')) {
-            console.error('Network error - might be a connectivity issue');
-          }
-          
-          // Show auto init instead of redirecting away
-          setNeedsInitialization(true);
-          setIsLoading(false);
-          setCheckComplete(true); // Mark complete to prevent re-runs
+
+          // Retry fetching studio after init
+          response = await fetch('/api/studio/profile', {
+            headers: { 'Cache-Control': 'no-cache' }
+          });
         }
+
+        if (response.ok) {
+          const data = await response.json();
+          setStudioData(data);
+        }
+      } catch (error) {
+        console.error('Error loading studio:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
-    
-    checkUserRole();
-  }, [status, session?.user?.id, session?.user?.tenantType]); // Only depend on specific values, not entire session object
-  
+
+    fetchOrCreateStudio();
+  }, [status, session?.user?.id, session?.user?.tenantType]);
+
   if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-200 border-t-blue-600 mb-4"></div>
+          <p>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
   }
-  
-  // Show auto initialization screen if needed
-  if (needsInitialization) {
-    return <AutoInitStudio />;
-  }
-  
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Studio Dashboard</h1>
