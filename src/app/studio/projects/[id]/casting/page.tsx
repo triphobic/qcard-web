@@ -8,7 +8,7 @@ import { useSession } from '@/hooks/useSupabaseAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Spinner, Badge, Button, Alert, AlertDescription, AlertTitle } from '@/components/ui';
-import InitStudio from '../../../init-studio';
+import { fetchWithStudioInit } from '@/hooks/useStudioInit';
 
 // Types
 interface CastingCall {
@@ -57,7 +57,7 @@ export default function CastingCallsPage({ params }: { params: { id: string } })
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [studioInitNeeded, setStudioInitNeeded] = useState(false);
+
   const [project, setProject] = useState<Project | null>(null);
   const [castingCalls, setCastingCalls] = useState<CastingCall[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -79,7 +79,7 @@ export default function CastingCallsPage({ params }: { params: { id: string } })
         if (response.status === 404) {
           const errorData = await response.json();
           if (errorData.error === "Studio not found") {
-            setStudioInitNeeded(true);
+
             throw new Error("Your studio account needs to be initialized");
           }
           throw new Error("Project not found");
@@ -153,11 +153,6 @@ export default function CastingCallsPage({ params }: { params: { id: string } })
       </div>
     );
   }
-  
-  if (studioInitNeeded) {
-    return <InitStudio />;
-  }
-  
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">

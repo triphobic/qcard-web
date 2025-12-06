@@ -8,7 +8,7 @@ import { useSession } from '@/hooks/useSupabaseAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Spinner, Alert, AlertDescription, AlertTitle } from '@/components/ui';
-import InitStudio from '../../../../init-studio';
+import { fetchWithStudioInit } from '@/hooks/useStudioInit';
 
 interface Location {
   id: string;
@@ -33,7 +33,7 @@ export default function NewCastingCallPage({ params }: { params: { id: string } 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [studioInitNeeded, setStudioInitNeeded] = useState(false);
+
   const [project, setProject] = useState<Project | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -72,7 +72,7 @@ export default function NewCastingCallPage({ params }: { params: { id: string } 
         if (response.status === 404) {
           const errorData = await response.json();
           if (errorData.error === "Studio not found") {
-            setStudioInitNeeded(true);
+
             throw new Error("Your studio account needs to be initialized");
           }
           throw new Error("Project not found");
@@ -203,11 +203,6 @@ export default function NewCastingCallPage({ params }: { params: { id: string } 
       </div>
     );
   }
-  
-  if (studioInitNeeded) {
-    return <InitStudio />;
-  }
-  
   if (!project) {
     return (
       <div className="container mx-auto px-4 py-8">

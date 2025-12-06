@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '@/hooks/useSupabaseAuth';
 import { useRouter } from 'next/navigation';
-import InitStudio from '../../init-studio';
+import { fetchWithStudioInit } from '@/hooks/useStudioInit';
 
 type ProjectFormData = {
   title: string;
@@ -28,7 +28,7 @@ export default function NewProjectPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [studioInitNeeded, setStudioInitNeeded] = useState(false);
+
 
   useEffect(() => {
     setMounted(true);
@@ -68,7 +68,7 @@ export default function NewProjectPage() {
         
         // Check if this is a Studio not found error
         if (response.status === 404 && errorData.error === "Studio not found") {
-          setStudioInitNeeded(true);
+
           throw new Error("Your studio account needs to be initialized");
         }
         
@@ -86,12 +86,6 @@ export default function NewProjectPage() {
       setLoading(false);
     }
   };
-  
-  // Show studio initialization dialog if needed
-  if (studioInitNeeded) {
-    return <InitStudio />;
-  }
-
   // Handle SSR
   if (!mounted) {
     return (

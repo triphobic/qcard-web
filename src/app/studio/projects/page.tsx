@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from '@/hooks/useSupabaseAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import InitStudio from '../init-studio';
+import { fetchWithStudioInit } from '@/hooks/useStudioInit';
 
 type Project = {
   id: string;
@@ -28,7 +28,7 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [studioInitNeeded, setStudioInitNeeded] = useState(false);
+
   
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -49,7 +49,7 @@ export default function ProjectsPage() {
         
         // Check if this is a Studio not found error
         if (response.status === 404 && errorData.error === "Studio not found") {
-          setStudioInitNeeded(true);
+
           throw new Error("Your studio account needs to be initialized");
         }
         
@@ -70,12 +70,6 @@ export default function ProjectsPage() {
   const filteredProjects = statusFilter === 'ALL'
     ? projects
     : projects.filter(project => project.status === statusFilter);
-  
-  // Show studio initialization dialog if needed
-  if (studioInitNeeded) {
-    return <InitStudio />;
-  }
-
   if (status === 'loading' || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">

@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from '@/hooks/useSupabaseAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import InitStudio from '../../../init-studio';
+import { fetchWithStudioInit } from '@/hooks/useStudioInit';
 
 type Scene = {
   id: string;
@@ -37,7 +37,7 @@ export default function ScenesPage({ params }: { params: { id: string } }) {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [studioInitNeeded, setStudioInitNeeded] = useState(false);
+
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
   
@@ -59,7 +59,7 @@ export default function ScenesPage({ params }: { params: { id: string } }) {
         console.error('Error response:', errorData);
         
         if (response.status === 404 && errorData.error === "Studio not found") {
-          setStudioInitNeeded(true);
+
           throw new Error("Your studio account needs to be initialized");
         }
         
@@ -84,7 +84,7 @@ export default function ScenesPage({ params }: { params: { id: string } }) {
         console.error('Error response:', errorData);
         
         if (response.status === 404 && errorData.error === "Studio not found") {
-          setStudioInitNeeded(true);
+
           throw new Error("Your studio account needs to be initialized");
         }
         
@@ -105,12 +105,6 @@ export default function ScenesPage({ params }: { params: { id: string } }) {
   const filteredScenes = statusFilter === 'ALL'
     ? scenes
     : scenes.filter(scene => scene.status === statusFilter);
-  
-  // Show studio initialization dialog if needed
-  if (studioInitNeeded) {
-    return <InitStudio />;
-  }
-  
   if (status === 'loading' || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
