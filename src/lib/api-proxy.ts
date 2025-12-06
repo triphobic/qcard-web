@@ -20,6 +20,27 @@ interface ProxyOptions {
 }
 
 /**
+ * Extract the project reference from a Supabase URL
+ * e.g., "https://abcdefgh.supabase.co" -> "abcdefgh"
+ */
+function getSupabaseProjectRef(): string | null {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) return null;
+
+  try {
+    const url = new URL(supabaseUrl);
+    // Extract project ref from hostname (e.g., "abcdefgh.supabase.co" -> "abcdefgh")
+    const hostParts = url.hostname.split('.');
+    if (hostParts.length >= 1) {
+      return hostParts[0];
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/**
  * Get the access token from the request cookies or Authorization header
  */
 async function getAccessToken(request: NextRequest): Promise<string | null> {
@@ -36,14 +57,31 @@ async function getAccessToken(request: NextRequest): Promise<string | null> {
     return accessToken;
   }
 
-  // Try Supabase auth cookie format
-  const supabaseAuth = cookieStore.get('sb-zcpoepdmjhewkspfwhwn-auth-token')?.value;
-  if (supabaseAuth) {
-    try {
-      const parsed = JSON.parse(supabaseAuth);
-      return parsed.access_token || null;
-    } catch {
-      return null;
+  // Try Supabase auth cookie format with dynamic project ref
+  const projectRef = getSupabaseProjectRef();
+  if (projectRef) {
+    const cookieName = `sb-${projectRef}-auth-token`;
+    const supabaseAuth = cookieStore.get(cookieName)?.value;
+    if (supabaseAuth) {
+      try {
+        const parsed = JSON.parse(supabaseAuth);
+        return parsed.access_token || null;
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  // Fallback: search for any sb-*-auth-token cookie
+  const allCookies = cookieStore.getAll();
+  for (const cookie of allCookies) {
+    if (cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')) {
+      try {
+        const parsed = JSON.parse(cookie.value);
+        return parsed.access_token || null;
+      } catch {
+        continue;
+      }
     }
   }
 
@@ -57,6 +95,9 @@ export async function proxyToBackend(
   request: NextRequest,
   options: ProxyOptions = {}
 ): Promise<NextResponse> {
+  const startTime = Date.now();
+  const requestId = Math.random().toString(36).substring(7);
+
   try {
     const { targetPath, headers: additionalHeaders = {}, forwardBody = true } = options;
 
@@ -67,6 +108,9 @@ export async function proxyToBackend(
 
     // Get access token
     const accessToken = await getAccessToken(request);
+
+    console.log(`[Proxy ${requestId}] ${request.method} ${path} -> ${targetUrl}`);
+    console.log(`[Proxy ${requestId}] Has token: ${!!accessToken}, API_URL: ${API_URL}`);
 
     // Build headers
     const headers: Record<string, string> = {
@@ -97,6 +141,7 @@ export async function proxyToBackend(
     }
 
     const response = await fetch(targetUrl, fetchOptions);
+    const duration = Date.now() - startTime;
 
     // Get response body
     const responseText = await response.text();
@@ -107,18 +152,27 @@ export async function proxyToBackend(
       responseBody = responseText;
     }
 
+    console.log(`[Proxy ${requestId}] Response: ${response.status} (${duration}ms)`);
+
+    // Log error responses for debugging
+    if (response.status >= 400) {
+      console.error(`[Proxy ${requestId}] Error response:`, responseText.substring(0, 500));
+    }
+
     // Return response with same status
     return NextResponse.json(responseBody, {
       status: response.status,
       headers: {
         'X-Proxied-From': 'next-api',
         'X-Backend-Status': String(response.status),
+        'X-Proxy-Duration': String(duration),
       },
     });
   } catch (error) {
-    console.error('Proxy error:', error);
+    const duration = Date.now() - startTime;
+    console.error(`[Proxy ${requestId}] Fatal error after ${duration}ms:`, error);
     return NextResponse.json(
-      { error: 'Failed to proxy request to backend' },
+      { error: 'Failed to proxy request to backend', details: String(error) },
       { status: 502 }
     );
   }

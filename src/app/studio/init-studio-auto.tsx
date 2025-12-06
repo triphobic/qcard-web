@@ -58,13 +58,15 @@ export default function AutoInitStudio() {
         // Mark initialization as recent
         sessionStorage.setItem('studioInitRecent', Date.now().toString());
 
-        // Try the auto-init endpoint first as it's more robust
-        const response = await fetch('/api/studio/auto-init', {
+        // Use profile-init endpoint with STUDIO userType
+        const response = await fetch('/api/profile-init', {
           method: 'POST',
           credentials: 'include', // Ensure cookies are sent
           headers: {
+            'Content-Type': 'application/json',
             'Cache-Control': 'no-cache', // Prevent caching issues
           },
+          body: JSON.stringify({ userType: 'STUDIO' }),
         });
         
         if (!response.ok) {

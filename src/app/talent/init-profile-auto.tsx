@@ -54,9 +54,10 @@ export default function AutoInitProfile({ onComplete }: AutoInitProfileProps) {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-          const response = await fetch('/api/talent-init', {
+          const response = await fetch('/api/profile-init', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userType: 'TALENT' }),
             signal: controller.signal
           });
 
