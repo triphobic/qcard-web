@@ -21,8 +21,10 @@ export default function InitProfile({ onSuccess }: { onSuccess?: () => void } = 
       
       // Now attempt to initialize the profile
       console.log("Attempting to initialize profile...");
-      const response = await fetch('/api/talent-init', {
+      const response = await fetch('/api/profile-init', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userType: 'TALENT' }),
       });
       
       // Log detailed response information regardless of success/failure

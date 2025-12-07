@@ -89,8 +89,10 @@ export default function TalentProfilePage() {
     try {
       // This method should use the correct endpoint
       console.log("Initializing profile from profile page");
-      const response = await fetch('/api/talent-init', {
+      const response = await fetch('/api/profile-init', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userType: 'TALENT' }),
       });
       
       if (!response.ok) {
@@ -526,10 +528,12 @@ export default function TalentProfilePage() {
     try {
       // Skip debug info to prevent unnecessary API calls
       console.log("Initializing profile directly without debug calls");
-      
+
       // Try to initialize the profile
-      const response = await fetch('/api/talent-init', {
+      const response = await fetch('/api/profile-init', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userType: 'TALENT' }),
       });
       
       // Get text first to avoid double-parsing
