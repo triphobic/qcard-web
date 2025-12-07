@@ -139,6 +139,9 @@ export default function SignUpPage() {
       };
 
       console.log("Creating app profile:", JSON.stringify(requestData, null, 2));
+      console.log("API URL from env:", process.env.NEXT_PUBLIC_API_URL || 'NOT SET - using proxy');
+      console.log("Session available:", !!authData.session);
+      console.log("Access token available:", !!authData.session?.access_token);
 
       try {
         const response = await fetch('/api/auth/register', {
@@ -151,16 +154,25 @@ export default function SignUpPage() {
         });
 
         console.log("Profile creation response status:", response.status);
+        console.log("Profile creation response headers:", Object.fromEntries(response.headers.entries()));
+
+        const responseText = await response.text();
+        console.log("Profile creation raw response:", responseText);
 
         if (!response.ok) {
-          const responseData = await response.json();
-          console.error("Profile creation failed:", responseData);
+          console.error("Profile creation failed with status:", response.status);
+          console.error("Profile creation error body:", responseText);
           // Don't throw - the Supabase user exists, we can continue
         } else {
-          console.log("App profile created successfully");
+          console.log("App profile created successfully:", responseText);
         }
       } catch (fetchError) {
         console.error("Error creating app profile:", fetchError);
+        console.error("Fetch error details:", {
+          name: (fetchError as Error).name,
+          message: (fetchError as Error).message,
+          stack: (fetchError as Error).stack,
+        });
         // Don't throw - the Supabase user exists, profile can be created later
       }
 
