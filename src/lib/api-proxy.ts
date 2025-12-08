@@ -20,6 +20,24 @@ interface ProxyOptions {
 }
 
 /**
+ * Parse a Supabase auth cookie value (handles both base64 and JSON formats)
+ */
+function parseSupabaseCookie(value: string): { access_token?: string } | null {
+  try {
+    // Check if it's base64 encoded (Supabase SSR uses "base64-" prefix)
+    if (value.startsWith('base64-')) {
+      const base64Data = value.slice(7); // Remove "base64-" prefix
+      const decoded = Buffer.from(base64Data, 'base64').toString('utf-8');
+      return JSON.parse(decoded);
+    }
+    // Try parsing as regular JSON
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Extract the project reference from a Supabase URL
  * e.g., "https://abcdefgh.supabase.co" -> "abcdefgh"
  */
@@ -64,8 +82,8 @@ async function getAccessToken(request: NextRequest): Promise<string | null> {
     const supabaseAuth = cookieStore.get(cookieName)?.value;
     if (supabaseAuth) {
       try {
-        const parsed = JSON.parse(supabaseAuth);
-        return parsed.access_token || null;
+        const parsed = parseSupabaseCookie(supabaseAuth);
+        return parsed?.access_token || null;
       } catch {
         return null;
       }
@@ -77,8 +95,8 @@ async function getAccessToken(request: NextRequest): Promise<string | null> {
   for (const cookie of allCookies) {
     if (cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')) {
       try {
-        const parsed = JSON.parse(cookie.value);
-        return parsed.access_token || null;
+        const parsed = parseSupabaseCookie(cookie.value);
+        return parsed?.access_token || null;
       } catch {
         continue;
       }
