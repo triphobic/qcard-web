@@ -112,10 +112,35 @@ export async function signOut() {
   try {
     console.log('[Supabase] Signing out');
     const supabase = await getSupabaseBrowser();
+
+    // Sign out from Supabase (this should clear the auth cookies)
     await supabase.auth.signOut();
+
+    // Also manually clear any remaining Supabase cookies
+    // This ensures cookies are cleared even if Supabase signOut doesn't work properly
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const cookieName = cookie.split('=')[0].trim();
+      if (cookieName.startsWith('sb-') && cookieName.includes('-auth-token')) {
+        // Clear the cookie by setting it to expire in the past
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        console.log('[Supabase] Cleared cookie:', cookieName);
+      }
+    }
+
+    // Also call the server-side clear cookies endpoint
+    try {
+      await fetch('/api/auth/clear-cookies', { method: 'POST' });
+    } catch (e) {
+      // Ignore errors from this endpoint
+    }
+
+    // Redirect to home page
     window.location.href = '/';
   } catch (error) {
     console.error('[Supabase] Sign-out error:', error);
+    // Even if there's an error, try to redirect
+    window.location.href = '/';
   }
 }
 
