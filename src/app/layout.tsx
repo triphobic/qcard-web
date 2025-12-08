@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Navigation from '@/components/navigation';
+import Footer from '@/components/footer';
 import { Providers } from './providers';
 
 // Force dynamic rendering since we use authentication throughout the app
@@ -62,6 +63,7 @@ export default function RootLayout({
           {/* Render without AuthLoading wrapper to avoid blocking */}
           <Navigation />
           <main className="min-h-screen">{children}</main>
+          <Footer />
         </Providers>
 
         {/* Removed emergency button and inline scripts that cause hydration issues */}

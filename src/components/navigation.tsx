@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession, useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { signOut } from '@/lib/client-auth';
 import { navigateTo, useForceRefreshStrategy } from '@/lib/navigation-utils';
-import { ThemeToggle } from '@/components/theme-toggle';
 
 // Badge component for notifications
 const NotificationBadge = ({ count }: { count: number }) => {
@@ -237,7 +236,6 @@ export default function Navigation() {
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            <ThemeToggle />
             {isAuthenticated ? (
               <div className="ml-3 relative">
                 <div>
