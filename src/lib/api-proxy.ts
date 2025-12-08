@@ -59,6 +59,34 @@ function getSupabaseProjectRef(): string | null {
 }
 
 /**
+ * Reassemble chunked Supabase cookies
+ * Supabase splits large tokens across multiple cookies: name.0, name.1, etc.
+ */
+function reassembleChunkedCookie(
+  allCookies: { name: string; value: string }[],
+  baseName: string
+): string | null {
+  // Find all chunks for this cookie
+  const chunks: { index: number; value: string }[] = [];
+
+  for (const cookie of allCookies) {
+    // Match pattern: baseName.0, baseName.1, etc.
+    const match = cookie.name.match(new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.(\\d+)$`));
+    if (match) {
+      chunks.push({ index: parseInt(match[1], 10), value: cookie.value });
+    }
+  }
+
+  if (chunks.length === 0) {
+    return null;
+  }
+
+  // Sort by index and concatenate
+  chunks.sort((a, b) => a.index - b.index);
+  return chunks.map(c => c.value).join('');
+}
+
+/**
  * Get the access token from the request cookies or Authorization header
  */
 async function getAccessToken(request: NextRequest): Promise<string | null> {
@@ -70,6 +98,8 @@ async function getAccessToken(request: NextRequest): Promise<string | null> {
 
   // Try cookies
   const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll();
+
   const accessToken = cookieStore.get('sb-access-token')?.value;
   if (accessToken) {
     return accessToken;
@@ -79,26 +109,61 @@ async function getAccessToken(request: NextRequest): Promise<string | null> {
   const projectRef = getSupabaseProjectRef();
   if (projectRef) {
     const cookieName = `sb-${projectRef}-auth-token`;
+
+    // First try non-chunked cookie
     const supabaseAuth = cookieStore.get(cookieName)?.value;
     if (supabaseAuth) {
       try {
         const parsed = parseSupabaseCookie(supabaseAuth);
-        return parsed?.access_token || null;
+        if (parsed?.access_token) return parsed.access_token;
       } catch {
-        return null;
+        // Continue to try chunked
+      }
+    }
+
+    // Try chunked cookies (name.0, name.1, etc.)
+    const chunkedValue = reassembleChunkedCookie(allCookies, cookieName);
+    if (chunkedValue) {
+      try {
+        const parsed = parseSupabaseCookie(chunkedValue);
+        if (parsed?.access_token) return parsed.access_token;
+      } catch {
+        // Continue to fallback
       }
     }
   }
 
-  // Fallback: search for any sb-*-auth-token cookie
-  const allCookies = cookieStore.getAll();
+  // Fallback: search for any sb-*-auth-token cookie (chunked or not)
+  // First, find all unique base names
+  const baseNames = new Set<string>();
   for (const cookie of allCookies) {
-    if (cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')) {
+    // Match sb-*-auth-token or sb-*-auth-token.N
+    const match = cookie.name.match(/^(sb-[^.]+?-auth-token)(?:\.\d+)?$/);
+    if (match) {
+      baseNames.add(match[1]);
+    }
+  }
+
+  for (const baseName of baseNames) {
+    // Try non-chunked first
+    const singleCookie = allCookies.find(c => c.name === baseName);
+    if (singleCookie) {
       try {
-        const parsed = parseSupabaseCookie(cookie.value);
-        return parsed?.access_token || null;
+        const parsed = parseSupabaseCookie(singleCookie.value);
+        if (parsed?.access_token) return parsed.access_token;
       } catch {
-        continue;
+        // Continue
+      }
+    }
+
+    // Try chunked
+    const chunkedValue = reassembleChunkedCookie(allCookies, baseName);
+    if (chunkedValue) {
+      try {
+        const parsed = parseSupabaseCookie(chunkedValue);
+        if (parsed?.access_token) return parsed.access_token;
+      } catch {
+        // Continue
       }
     }
   }
