@@ -9,7 +9,7 @@ import { useSession } from '@/hooks/useSupabaseAuth';
 import Button from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
 
-export default function Casting SurveyPage({ 
+export default function CastingSurveyPage({ 
   params 
 }: { 
   params: { id: string } 
