@@ -1,5 +1,5 @@
 /**
- * /api/talent/questionnaires/invitations/[id]/decline Route
+ * /api/talent/casting-surveys/invitations/[id]/accept Route
  * Proxied to Backend
  */
 

@@ -313,7 +313,7 @@ export default function TalentInvitationPage() {
       // Determine which API endpoint to use based on invitation type
       switch (invitationType) {
         case 'questionnaire':
-          endpoint = `/api/studio/questionnaires/${invitationId}/invitations`;
+          endpoint = `/api/studio/casting-surveys/${invitationId}/invitations`;
           break;
         case 'casting-call':
           endpoint = `/api/studio/casting-calls/${invitationId}/invitations`;
@@ -351,7 +351,7 @@ export default function TalentInvitationPage() {
         let redirectUrl = '';
         switch (invitationType) {
           case 'questionnaire':
-            redirectUrl = `/studio/questionnaires/${invitationId}`;
+            redirectUrl = `/studio/casting-surveys/${invitationId}`;
             break;
           case 'casting-call':
             redirectUrl = `/studio/casting-calls/${invitationId}`;

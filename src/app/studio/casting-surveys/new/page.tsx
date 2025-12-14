@@ -49,7 +49,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function NewQuestionnairePage() {
+export default function NewCastingSurveyPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -82,26 +82,26 @@ export default function NewQuestionnairePage() {
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/studio/questionnaires', {
+      const response = await fetch('/api/studio/casting-surveys', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(values),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create questionnaire');
+        throw new Error(errorData.message || 'Failed to create casting survey');
       }
-      
+
       const data = await response.json();
-      router.push(`/studio/questionnaires/${data.id}/questions/new`);
+      router.push(`/studio/casting-surveys/${data.id}/questions/new`);
     } catch (err) {
-      console.error('Error creating questionnaire:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create questionnaire');
+      console.error('Error creating casting survey:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create casting survey');
     } finally {
       setSubmitting(false);
     }
@@ -110,14 +110,14 @@ export default function NewQuestionnairePage() {
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
-        <Link href="/studio/questionnaires" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/studio/casting-surveys" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to Questionnaires
+          Back to Casting Surveys
         </Link>
       </div>
-      
+
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Create New Questionnaire</h1>
+        <h1 className="text-2xl font-bold mb-6">Create New Casting Survey</h1>
         
         {error && (
           <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
@@ -128,9 +128,9 @@ export default function NewQuestionnairePage() {
         
         <Card>
           <CardHeader>
-            <CardTitle>Questionnaire Details</CardTitle>
+            <CardTitle>Casting Survey Details</CardTitle>
             <CardDescription>
-              Create a new questionnaire to gather information from talent profiles.
+              Create a new casting survey to gather information from talent profiles.
               You&apos;ll be able to add questions after creating the basic details.
             </CardDescription>
           </CardHeader>
@@ -144,20 +144,20 @@ export default function NewQuestionnairePage() {
                     <FormItem>
                       <FormLabel>Title*</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter questionnaire title" 
+                        <Input
+                          placeholder="Enter casting survey title"
                           {...field}
-                          disabled={submitting} 
+                          disabled={submitting}
                         />
                       </FormControl>
                       <FormDescription>
-                        A clear, descriptive title for your questionnaire
+                        A clear, descriptive title for your casting survey
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="description"
@@ -165,8 +165,8 @@ export default function NewQuestionnairePage() {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Provide details about the purpose of this questionnaire" 
+                        <Textarea
+                          placeholder="Provide details about the purpose of this casting survey"
                           {...field}
                           value={field.value || ''}
                           disabled={submitting}
@@ -174,13 +174,13 @@ export default function NewQuestionnairePage() {
                         />
                       </FormControl>
                       <FormDescription>
-                        Optional description that explains the purpose of the questionnaire
+                        Optional description that explains the purpose of the casting survey
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
@@ -190,7 +190,7 @@ export default function NewQuestionnairePage() {
                         <div className="space-y-0.5">
                           <FormLabel>Active</FormLabel>
                           <FormDescription>
-                            Enable or disable this questionnaire
+                            Enable or disable this casting survey
                           </FormDescription>
                         </div>
                         <FormControl>
@@ -203,7 +203,7 @@ export default function NewQuestionnairePage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="requiresApproval"
@@ -226,9 +226,9 @@ export default function NewQuestionnairePage() {
                     )}
                   />
                 </div>
-                
+
                 <div className="flex justify-end gap-3 pt-4">
-                  <Link href="/studio/questionnaires">
+                  <Link href="/studio/casting-surveys">
                     <Button variant="outline" disabled={submitting}>Cancel</Button>
                   </Link>
                   <Button type="submit" disabled={submitting}>

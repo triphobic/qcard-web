@@ -199,27 +199,27 @@ export default function Navigation() {
               </Link>
               {session?.user?.tenantType === 'STUDIO' && (
                 <Link
-                  href="/studio/questionnaires"
+                  href="/studio/casting-surveys"
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    pathname.startsWith('/studio/questionnaires')
+                    pathname.startsWith('/studio/casting-surveys')
                       ? 'border-blue-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                   }`}
                 >
-                  Questionnaires
+                  Casting Surveys
                 </Link>
               )}
               {session?.user?.tenantType === 'TALENT' && (
                 <>
                   <Link
-                    href="/talent/questionnaires"
+                    href="/talent/casting-surveys"
                     className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      pathname.startsWith('/talent/questionnaires')
+                      pathname.startsWith('/talent/casting-surveys')
                         ? 'border-blue-500 text-gray-900'
                         : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                     }`}
                   >
-                    Questionnaires
+                    Casting Surveys
                   </Link>
                   <Link
                     href="/talent/calendar"
@@ -472,27 +472,27 @@ export default function Navigation() {
             </Link>
             {session?.user?.tenantType === 'STUDIO' && (
               <Link
-                href="/studio/questionnaires"
+                href="/studio/casting-surveys"
                 className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                  pathname.startsWith('/studio/questionnaires')
+                  pathname.startsWith('/studio/casting-surveys')
                     ? 'bg-blue-50 border-blue-500 text-blue-700'
                     : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
                 }`}
               >
-                Questionnaires
+                Casting Surveys
               </Link>
             )}
             {session?.user?.tenantType === 'TALENT' && (
               <>
                 <Link
-                  href="/talent/questionnaires"
+                  href="/talent/casting-surveys"
                   className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                    pathname.startsWith('/talent/questionnaires')
+                    pathname.startsWith('/talent/casting-surveys')
                       ? 'bg-blue-50 border-blue-500 text-blue-700'
                       : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
                   }`}
                 >
-                  Questionnaires
+                  Casting Surveys
                 </Link>
                 <Link
                   href="/talent/calendar"

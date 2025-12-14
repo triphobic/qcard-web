@@ -14,7 +14,7 @@ import Spinner from '@/components/ui/spinner';
 import { PlusCircle, ClipboardList, Send, CheckCircle, XCircle } from 'lucide-react';
 
 // Define TypeScript interfaces
-interface Questionnaire {
+interface CastingSurvey {
   id: string;
   title: string;
   description: string | null;
@@ -29,10 +29,10 @@ interface Questionnaire {
   };
 }
 
-export default function QuestionnairesPage() {
+export default function CastingSurveysPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [questionnaires, setQuestionnaires] = useState<Questionnaire[]>([]);
+  const [castingSurveys, setCastingSurveys] = useState<CastingSurvey[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,32 +43,32 @@ export default function QuestionnairesPage() {
       return;
     }
 
-    const fetchQuestionnaires = async () => {
+    const fetchCastingSurveys = async () => {
       try {
-        const response = await fetch('/api/studio/questionnaires');
-        
+        const response = await fetch('/api/studio/casting-surveys');
+
         if (!response.ok) {
-          throw new Error('Failed to fetch questionnaires');
+          throw new Error('Failed to fetch casting surveys');
         }
-        
+
         const data = await response.json();
-        setQuestionnaires(data);
+        setCastingSurveys(data);
       } catch (err) {
-        console.error('Error fetching questionnaires:', err);
-        setError('Failed to load questionnaires. Please try again later.');
+        console.error('Error fetching casting surveys:', err);
+        setError('Failed to load casting surveys. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchQuestionnaires();
+    fetchCastingSurveys();
   }, [status, router]);
 
   if (status === 'loading' || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Spinner size="md" />
-        <span className="ml-2">Loading questionnaires...</span>
+        <span className="ml-2">Loading casting surveys...</span>
       </div>
     );
   }
@@ -89,68 +89,68 @@ export default function QuestionnairesPage() {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Questionnaires</h1>
+          <h1 className="text-2xl font-bold">Casting Surveys</h1>
           <p className="text-muted-foreground">Create and manage custom forms to gather information from talent</p>
         </div>
-        <Link href="/studio/questionnaires/new">
+        <Link href="/studio/casting-surveys/new">
           <Button className="flex items-center gap-2">
             <PlusCircle className="h-4 w-4" />
-            New Questionnaire
+            New Casting Survey
           </Button>
         </Link>
       </div>
 
-      {questionnaires.length === 0 ? (
+      {castingSurveys.length === 0 ? (
         <div className="text-center py-12 bg-muted rounded-lg">
           <ClipboardList className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-xl font-semibold mb-2">No questionnaires yet</h2>
+          <h2 className="text-xl font-semibold mb-2">No casting surveys yet</h2>
           <p className="text-muted-foreground mb-6">
-            Create your first questionnaire to gather information from talent.
+            Create your first casting survey to gather information from talent.
           </p>
-          <Link href="/studio/questionnaires/new">
-            <Button>Create Questionnaire</Button>
+          <Link href="/studio/casting-surveys/new">
+            <Button>Create Casting Survey</Button>
           </Link>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {questionnaires.map((questionnaire) => (
-            <Card key={questionnaire.id} className="overflow-hidden">
+          {castingSurveys.map((survey) => (
+            <Card key={survey.id} className="overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="truncate">{questionnaire.title}</CardTitle>
-                  <Badge variant={questionnaire.isActive ? "default" : "secondary"}>
-                    {questionnaire.isActive ? "Active" : "Inactive"}
+                  <CardTitle className="truncate">{survey.title}</CardTitle>
+                  <Badge variant={survey.isActive ? "default" : "secondary"}>
+                    {survey.isActive ? "Active" : "Inactive"}
                   </Badge>
                 </div>
                 <CardDescription className="line-clamp-2 min-h-[40px]">
-                  {questionnaire.description || "No description provided"}
+                  {survey.description || "No description provided"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="pb-3">
                 <div className="flex gap-4 text-sm">
                   <div className="flex items-center">
                     <ClipboardList className="h-4 w-4 mr-1" />
-                    <span>{questionnaire._count?.questions || 0} Questions</span>
+                    <span>{survey._count?.questions || 0} Questions</span>
                   </div>
                   <div className="flex items-center">
                     <Send className="h-4 w-4 mr-1" />
-                    <span>{questionnaire._count?.invitations || 0} Invites</span>
+                    <span>{survey._count?.invitations || 0} Invites</span>
                   </div>
                   <div className="flex items-center">
                     <CheckCircle className="h-4 w-4 mr-1" />
-                    <span>{questionnaire._count?.responses || 0} Responses</span>
+                    <span>{survey._count?.responses || 0} Responses</span>
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between pt-3 border-t">
                 <div className="text-xs text-muted-foreground">
-                  Created {new Date(questionnaire.createdAt).toLocaleDateString()}
+                  Created {new Date(survey.createdAt).toLocaleDateString()}
                 </div>
                 <div className="flex gap-2">
-                  <Link href={`/studio/questionnaires/${questionnaire.id}`}>
+                  <Link href={`/studio/casting-surveys/${survey.id}`}>
                     <Button variant="outline" size="sm">View</Button>
                   </Link>
-                  <Link href={`/studio/questionnaires/${questionnaire.id}/invitations`}>
+                  <Link href={`/studio/casting-surveys/${survey.id}/invitations`}>
                     <Button size="sm">Invite Talents</Button>
                   </Link>
                 </div>

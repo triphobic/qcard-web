@@ -9,13 +9,13 @@ import { ensureHttps } from './lib/utils';
 const SUBSCRIPTION_REQUIRED_PATHS = [
   '/studio/talent-search',         // Advanced talent search requires subscription
   '/studio/external-actors',       // External actor management requires subscription
-  '/talent/questionnaires',        // Accessing questionnaires requires subscription
+  '/talent/casting-surveys',        // Accessing casting surveys requires subscription
 ];
 
 // Features that require specific subscription tiers or features
 const PREMIUM_FEATURE_PATHS: Record<string, string> = {
   '/studio/projects': 'multi_project_management',
-  '/studio/questionnaires': 'custom_questionnaires',
+  '/studio/casting-surveys': 'custom_questionnaires',
   '/talent/messages': 'unlimited_messaging'
 };
 
@@ -162,8 +162,8 @@ export const config = {
     '/studio/talent-search/:path*',
     '/studio/external-actors/:path*',
     '/studio/projects/:path*',
-    '/studio/questionnaires/:path*',
-    '/talent/questionnaires/:path*',
+    '/studio/casting-surveys/:path*',
+    '/talent/casting-surveys/:path*',
     '/talent/messages/:path*',
   ],
 };

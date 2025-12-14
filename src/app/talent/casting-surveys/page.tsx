@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 // Define TypeScript interfaces
-interface QuestionnaireInvitation {
+interface SurveyInvitation {
   id: string;
   status: string;
   sentAt: string;
@@ -42,10 +42,10 @@ interface QuestionnaireInvitation {
   };
 }
 
-export default function TalentQuestionnairesPage() {
+export default function TalentCastingSurveysPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [invitations, setInvitations] = useState<QuestionnaireInvitation[]>([]);
+  const [invitations, setInvitations] = useState<SurveyInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('pending');
@@ -59,17 +59,17 @@ export default function TalentQuestionnairesPage() {
 
     const fetchInvitations = async () => {
       try {
-        const response = await fetch('/api/talent/questionnaires/invitations');
-        
+        const response = await fetch('/api/talent/casting-surveys/invitations');
+
         if (!response.ok) {
-          throw new Error('Failed to fetch questionnaire invitations');
+          throw new Error('Failed to fetch survey invitations');
         }
-        
+
         const data = await response.json();
         setInvitations(data);
       } catch (err) {
         console.error('Error fetching invitations:', err);
-        setError('Failed to load questionnaire invitations. Please try again later.');
+        setError('Failed to load survey invitations. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -84,16 +84,16 @@ export default function TalentQuestionnairesPage() {
 
   const handleAccept = async (invitationId: string) => {
     try {
-      const response = await fetch(`/api/talent/questionnaires/invitations/${invitationId}/accept`, {
+      const response = await fetch(`/api/talent/casting-surveys/invitations/${invitationId}/accept`, {
         method: 'POST',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to accept invitation');
       }
-      
+
       // Redirect to the response page
-      router.push(`/talent/questionnaires/${invitationId}/respond`);
+      router.push(`/talent/casting-surveys/${invitationId}/respond`);
     } catch (err) {
       console.error('Error accepting invitation:', err);
       setError('Failed to accept invitation. Please try again later.');
@@ -102,19 +102,19 @@ export default function TalentQuestionnairesPage() {
 
   const handleDecline = async (invitationId: string) => {
     try {
-      const response = await fetch(`/api/talent/questionnaires/invitations/${invitationId}/decline`, {
+      const response = await fetch(`/api/talent/casting-surveys/invitations/${invitationId}/decline`, {
         method: 'POST',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to decline invitation');
       }
-      
+
       // Update the local state
-      setInvitations(invitations.map(inv => 
+      setInvitations(invitations.map(inv =>
         inv.id === invitationId ? { ...inv, status: 'DECLINED' } : inv
       ));
-      
+
       // Switch to the declined tab
       setActiveTab('declined');
     } catch (err) {
@@ -135,7 +135,7 @@ export default function TalentQuestionnairesPage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Spinner size="md" />
-        <span className="ml-2">Loading questionnaires...</span>
+        <span className="ml-2">Loading casting surveys...</span>
       </div>
     );
   }
@@ -155,8 +155,8 @@ export default function TalentQuestionnairesPage() {
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Questionnaires</h1>
-        <p className="text-muted-foreground">View and respond to questionnaires from studios</p>
+        <h1 className="text-2xl font-bold">Casting Surveys</h1>
+        <p className="text-muted-foreground">View and respond to casting surveys from studios</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -194,9 +194,9 @@ export default function TalentQuestionnairesPage() {
           {pendingInvitations.length === 0 ? (
             <div className="text-center py-12 bg-muted rounded-lg">
               <ClipboardList className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">No pending questionnaires</h2>
+              <h2 className="text-xl font-semibold mb-2">No pending casting surveys</h2>
               <p className="text-muted-foreground">
-                You don&apos;t have any pending questionnaire invitations.
+                You don&apos;t have any pending casting survey invitations.
               </p>
             </div>
           ) : (
@@ -259,9 +259,9 @@ export default function TalentQuestionnairesPage() {
           {completedInvitations.length === 0 ? (
             <div className="text-center py-12 bg-muted rounded-lg">
               <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">No completed questionnaires</h2>
+              <h2 className="text-xl font-semibold mb-2">No completed casting surveys</h2>
               <p className="text-muted-foreground">
-                You haven&apos;t completed any questionnaires yet.
+                You haven&apos;t completed any casting surveys yet.
               </p>
             </div>
           ) : (
@@ -289,7 +289,7 @@ export default function TalentQuestionnairesPage() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Link href={`/talent/questionnaires/${invitation.id}/view`} className="w-full">
+                    <Link href={`/talent/casting-surveys/${invitation.id}/view`} className="w-full">
                       <Button className="w-full">
                         View Response
                       </Button>
@@ -300,14 +300,14 @@ export default function TalentQuestionnairesPage() {
             </div>
           )}
         </TabsContent>
-        
+
         <TabsContent value="declined">
           {declinedInvitations.length === 0 ? (
             <div className="text-center py-12 bg-muted rounded-lg">
               <XCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">No declined questionnaires</h2>
+              <h2 className="text-xl font-semibold mb-2">No declined casting surveys</h2>
               <p className="text-muted-foreground">
-                You haven&apos;t declined any questionnaire invitations.
+                You haven&apos;t declined any casting survey invitations.
               </p>
             </div>
           ) : (

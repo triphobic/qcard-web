@@ -87,7 +87,7 @@ function SubscriptionContent() {
             'Access to all regions', 
             'Unlimited messaging', 
             'Advanced talent search',
-            'Custom questionnaires'
+            'Custom Casting Surveys'
           ]
         },
         {

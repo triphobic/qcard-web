@@ -1,5 +1,5 @@
 /**
- * /api/studio/questionnaires/[id]/invitations Route
+ * /api/studio/casting-surveys Route
  * Proxied to Backend
  */
 

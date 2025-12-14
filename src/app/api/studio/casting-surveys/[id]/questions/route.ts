@@ -1,5 +1,5 @@
 /**
- * /api/studio/questionnaires/[id] Route
+ * /api/studio/casting-surveys/[id]/questions Route
  * Proxied to Backend
  */
 
@@ -7,4 +7,4 @@ import { createProxyHandlers } from '@/lib/api-proxy';
 
 export const dynamic = 'force-dynamic';
 
-export const { GET, PATCH, DELETE } = createProxyHandlers();
+export const { GET, POST } = createProxyHandlers();

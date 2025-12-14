@@ -9,7 +9,7 @@ import { useSession } from '@/hooks/useSupabaseAuth';
 import Button from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
 
-export default function NewQuestionPage({ 
+export default function Casting SurveyPage({ 
   params 
 }: { 
   params: { id: string } 
@@ -34,19 +34,24 @@ export default function NewQuestionPage({
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
-        <Link href={`/studio/questionnaires/${params.id}`} className="flex items-center">
-          Back to Questionnaire
+        <Link href="/studio/casting-surveys" className="flex items-center">
+          Back to Casting Surveys
         </Link>
       </div>
       
       <div className="text-center py-12 bg-muted rounded-lg">
-        <h2 className="text-xl font-semibold mb-2">Add Question</h2>
+        <h2 className="text-xl font-semibold mb-2">Casting Survey Details</h2>
         <p className="mb-6">
           This feature is currently being implemented.
         </p>
-        <Link href={`/studio/questionnaires/${params.id}`}>
-          <Button>Back to Questionnaire</Button>
-        </Link>
+        <div className="space-x-4">
+          <Link href="/studio/casting-surveys">
+            <Button>Back to Casting Surveys</Button>
+          </Link>
+          <Link href={`/studio/casting-surveys/${params.id}/questions/new`}>
+            <Button>Add Question</Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
