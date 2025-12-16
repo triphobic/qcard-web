@@ -64,8 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session } } = await supabase.auth.getSession();
         const currentUser = session?.user ?? null;
         setUser(currentUser);
+        // Set loading false immediately, fetch profile in background
+        setLoading(false);
         if (currentUser) {
-          await fetchProfile(currentUser.id);
+          // Don't await - let it load in background
+          fetchProfile(currentUser.id);
         } else {
           setProfile(null);
         }
@@ -73,7 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error checking auth session:', error);
         setUser(null);
         setProfile(null);
-      } finally {
         setLoading(false);
       }
     };
@@ -86,12 +88,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
+        setLoading(false);
         if (currentUser) {
-          await fetchProfile(currentUser.id);
+          fetchProfile(currentUser.id);
         } else {
           setProfile(null);
         }
-        setLoading(false);
       });
       return subscription;
     };
