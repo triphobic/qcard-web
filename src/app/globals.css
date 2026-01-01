@@ -83,12 +83,12 @@ body {
 .dark input:focus,
 .dark textarea:focus,
 .dark select:focus {
-  border-color: #5050b0;
+  border-color: #474790;
 }
 
 /* Dark mode alert/notification backgrounds */
 .dark .bg-blue-50 {
-  background-color: rgba(17, 17, 132, 0.15) !important;
+  background-color: rgba(7, 7, 56, 0.2) !important;
 }
 
 .dark .bg-green-50 {
@@ -105,7 +105,7 @@ body {
 
 /* Dark mode alert borders */
 .dark .border-blue-200 {
-  border-color: rgba(17, 17, 132, 0.4) !important;
+  border-color: rgba(7, 7, 56, 0.5) !important;
 }
 
 .dark .border-green-200 {
@@ -123,7 +123,7 @@ body {
 
 /* Dark mode selection card styling */
 .dark .border-blue-500 {
-  border-color: #5050b0 !important;
+  border-color: #474790 !important;
 }
 
 .dark .border-green-500 {
@@ -132,12 +132,12 @@ body {
 
 /* Dark mode accent color overrides for elegant look */
 .dark .bg-blue-600 {
-  background-color: #111184 !important;
+  background-color: #070738 !important;
 }
 
 .dark .bg-blue-700,
 .dark .hover\:bg-blue-700:hover {
-  background-color: #0e0e6a !important;
+  background-color: #05052a !important;
 }
 
 .dark .bg-green-600 {
@@ -150,11 +150,11 @@ body {
 }
 
 .dark .text-blue-600 {
-  color: #7777c2 !important;
+  color: #7070a9 !important;
 }
 
 .dark .text-blue-500 {
-  color: #9e9ed4 !important;
+  color: #9999c2 !important;
 }
 
 .dark .text-green-600 {
@@ -166,9 +166,9 @@ body {
 }
 
 .dark .focus\:ring-blue-500:focus {
-  --tw-ring-color: #5050b0 !important;
+  --tw-ring-color: #474790 !important;
 }
 
 .dark .focus\:border-blue-500:focus {
-  border-color: #5050b0 !important;
+  border-color: #474790 !important;
 }
