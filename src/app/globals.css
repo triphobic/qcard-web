@@ -92,7 +92,7 @@ body {
 }
 
 .dark .bg-green-50 {
-  background-color: rgba(90, 138, 110, 0.12) !important;
+  background-color: rgba(6, 64, 43, 0.15) !important;
 }
 
 .dark .bg-red-50 {
@@ -109,7 +109,7 @@ body {
 }
 
 .dark .border-green-200 {
-  border-color: rgba(90, 138, 110, 0.3) !important;
+  border-color: rgba(6, 64, 43, 0.4) !important;
 }
 
 .dark .border-red-200 {
@@ -127,7 +127,7 @@ body {
 }
 
 .dark .border-green-500 {
-  border-color: #5a8a6e !important;
+  border-color: #0a5c3d !important;
 }
 
 /* Dark mode accent color overrides for elegant look */
@@ -141,12 +141,12 @@ body {
 }
 
 .dark .bg-green-600 {
-  background-color: #5a8a6e !important;
+  background-color: #06402B !important;
 }
 
 .dark .bg-green-700,
 .dark .hover\:bg-green-700:hover {
-  background-color: #486f58 !important;
+  background-color: #053522 !important;
 }
 
 .dark .text-blue-600 {
@@ -158,11 +158,11 @@ body {
 }
 
 .dark .text-green-600 {
-  color: #7fbb97 !important;
+  color: #2d9066 !important;
 }
 
 .dark .text-green-500 {
-  color: #7fbb97 !important;
+  color: #5eaa8a !important;
 }
 
 .dark .focus\:ring-blue-500:focus {
