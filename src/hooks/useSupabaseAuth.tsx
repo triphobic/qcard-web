@@ -8,6 +8,18 @@ interface UserProfile {
   id: string;
   role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
   tenantType: string | null;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+// Helper to convert string to title case
+function toTitleCase(str: string | null | undefined): string {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 interface AuthContextType {
@@ -35,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const supabase = await getSupabaseBrowser();
       const { data, error } = await supabase
         .from('User')
-        .select('id, role, Tenant(tenantType)')
+        .select('id, role, firstName, lastName, Tenant(tenantType)')
         .eq('id', userId)
         .single();
 
@@ -49,6 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: data.id,
         role: data.role as 'USER' | 'ADMIN' | 'SUPER_ADMIN',
         tenantType: (data.Tenant as any)?.tenantType || null,
+        firstName: data.firstName,
+        lastName: data.lastName,
       });
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -145,12 +159,24 @@ export function useSession() {
   const role = profile?.role || 'USER';
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
 
+  // Build display name from firstName/lastName with title case, fallback to email prefix
+  const getDisplayName = () => {
+    if (profile?.firstName || profile?.lastName) {
+      const first = toTitleCase(profile.firstName);
+      const last = toTitleCase(profile.lastName);
+      return `${first} ${last}`.trim();
+    }
+    // Fallback to email prefix with title case
+    const emailPrefix = user?.email?.split('@')[0] || '';
+    return toTitleCase(emailPrefix.replace(/[._-]/g, ' '));
+  };
+
   return {
     data: user ? {
       user: {
         id: user.id,
         email: user.email,
-        name: user.email?.split('@')[0], // Use email prefix as name if not available
+        name: getDisplayName(),
         image: null,
         tenantType: normalizedTenantType,
         role: role,
