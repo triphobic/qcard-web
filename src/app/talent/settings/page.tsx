@@ -1,9 +1,6 @@
 'use client';
 
-// Force dynamic rendering for this page
-export const dynamic = 'force-dynamic';
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSession } from '@/hooks/useSupabaseAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -11,37 +8,39 @@ import Link from 'next/link';
 export default function TalentSettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
+  const hasFetched = useRef(false);
+
   const [userData, setUserData] = useState({
     firstName: '',
     lastName: '',
     email: '',
   });
-  
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
-  
+
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'account' | 'password' | 'notifications' | 'danger'>('account');
-  
-  // Load user data
+
+  // Load user data - only fetch once when authenticated
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/sign-in');
-    } else if (status === 'authenticated' && session?.user) {
+    } else if (status === 'authenticated' && session?.user && !hasFetched.current) {
+      hasFetched.current = true;
       fetchUserData();
-    } else {
+    } else if (status !== 'loading') {
       setLoading(false);
     }
-  }, [status, session]);
+  }, [status, session?.user?.id]);
   
   const fetchUserData = async () => {
     setLoading(true);
